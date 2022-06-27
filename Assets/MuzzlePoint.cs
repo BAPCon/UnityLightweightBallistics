@@ -8,6 +8,9 @@ public class MuzzlePoint : MonoBehaviour
     public float tat;
     public static float[] _50yardDrops9mm;
     public static float[] _50yardDrops40sw;
+    public static float[] _50yardDrops22lr;
+    public static float[] _50yardDrops223nato;
+    public static float[] _50yardDrops762rus;
     GameObject gnwe;
     List<Projectile> activeProjectiles = new List<Projectile>();
     // Start is called before the first frame update
@@ -25,29 +28,37 @@ public class MuzzlePoint : MonoBehaviour
             };
         for (int x = 0; x < _50yardDrops40sw.Length; x++) { _50yardDrops40sw[x] = Inches(_50yardDrops40sw[x]); }
 
-        activeProjectiles.Add(new Projectile(transform.position, 343.2048f, transform.forward, ProjectileTypes._9mm));
-        activeProjectiles.Add(new Projectile(transform.position, 327.3552f, transform.forward, ProjectileTypes._40sw));
+        _50yardDrops22lr = new float[]
+            {// 0 - 50 -100 -150 -200 -250 -300 - 350 - 400 - 450 - 500
+                0f, 0f, 7.4f, 22.8f, 45.9f, 86f, 126f, 224f, 325f,450f,600f
+            };
+        for (int x = 0; x < _50yardDrops22lr.Length; x++) { _50yardDrops22lr[x] = Inches(_50yardDrops22lr[x]); }
 
+        _50yardDrops223nato = new float[]
+            {// 0 - 50 -100 -150 -200 -250 -300 - 350 - 400 - 450 - 500 - 550 - 600 - 650f - 700f - 750f - 800f
+                0f, 0f, 0f,  0f,  0f,  0f,  0f,   0f,   10f,  40f,  55f,  70f,  90f,  120f,  135f,  180f,  300f, 360f, 400f, 525f, 630f
+            };
+        for (int x = 0; x < _50yardDrops223nato.Length; x++) { _50yardDrops223nato[x] = Inches(_50yardDrops223nato[x]); }
+
+        _50yardDrops762rus = new float[]
+            {// 0 - 50 -100 -150 -200 -250 -300 - 350 - 400 - 450 - 500 - 550 - 600 - 650f - 700f - 750f - 800f
+                0f, 0f, 0f,  0f,  6f,  13f, 30f,  40f,  60f,  80f,  115f, 155f,  215f,  292f,  380f,  480f,  590f, 720f, 840f, 1005f
+            };
+        for (int x = 0; x < _50yardDrops762rus.Length; x++) { _50yardDrops762rus[x] = Inches(_50yardDrops762rus[x]); }
     }
     public GameObject g;
+    public ProjectileTypes projectileTypeTest;
     // Update is called once per frame
     void Update()
     {
-        tat += Time.deltaTime;
-        if (tat > 5f)
+        if(Input.GetKeyDown(KeyCode.F))
         {
-            activeProjectiles.Add(new Projectile(transform.position, 343.2048f, transform.forward, ProjectileTypes._9mm));
-            tat = 0f;
+            activeProjectiles.Add(new Projectile(transform.position, velocities[(int)projectileTypeTest], transform.forward, projectileTypeTest));
         }
-        Debug.DrawRay(new Vector3(0f, 0f, 100f), transform.up * 5f, Color.blue, Time.deltaTime);
-        Debug.DrawRay(new Vector3(0f, 0f, 200f), transform.up * 5f, Color.yellow, Time.deltaTime);
-        Debug.DrawRay(new Vector3(0f, 0f, 300f), transform.up * 5f, Color.green, Time.deltaTime);
         foreach(Projectile p in activeProjectiles)
         {
             p.Tick();
-            g.transform.position = p.currentPosition;
-            velocity = p.velocity;
-            Debug.Log(p.projectileTypes.ToString() +" | "+ p.currentPosition.ToString());
+            p.DrawRay();
         }
     }
 
@@ -58,12 +69,17 @@ public class MuzzlePoint : MonoBehaviour
     public enum ProjectileTypes
     {
         _9mm,
-        _40sw
+        _40sw,
+        _22lr,
+        _223nato,
+        _762rus
     }
+    public float[] velocities = new float[] { 343.2048f, 327.3552f, 323.3928f, 959.5104f, 720.2424f };
 }
 
 public class Projectile
 {
+
     Vector3 startPosition;
     Vector3 direction;
     public Vector3 currentPosition;
@@ -72,6 +88,7 @@ public class Projectile
     public float velocity;
     float dropVelocity = 0f;
     float lastDropVelocity = 0f;
+
     public Projectile(Vector3 startPosition, float v, Vector3 dir, MuzzlePoint.ProjectileTypes pt)
     {
         this.startPosition = startPosition;
@@ -79,6 +96,10 @@ public class Projectile
         this.velocity = v;
         this.direction = dir;
         this.projectileTypes = pt;
+    }
+    public void DrawRay()
+    {
+        Debug.DrawRay(currentPosition, lastPosition - currentPosition, Color.cyan, Time.deltaTime*6f);   
     }
     public void Tick()
     {
@@ -98,16 +119,21 @@ public class Projectile
         {
             drop = MuzzlePoint._50yardDrops40sw[Mathf.Min(Mathf.RoundToInt(distance / 75f), MuzzlePoint._50yardDrops40sw.Length - 1)];
         }
+        if (projectileTypes.ToString() == "_22lr")
+        {
+            drop = MuzzlePoint._50yardDrops22lr[Mathf.Min(Mathf.RoundToInt(distance / 75f), MuzzlePoint._50yardDrops22lr.Length - 1)];
+        }
+        if (projectileTypes.ToString() == "_223nato")
+        {
+            drop = MuzzlePoint._50yardDrops223nato[Mathf.Min(Mathf.RoundToInt(distance / 75f), MuzzlePoint._50yardDrops223nato.Length - 1)];
+        }
+        if (projectileTypes.ToString() == "_762rus")
+        {
+            drop = MuzzlePoint._50yardDrops762rus[Mathf.Min(Mathf.RoundToInt(distance / 75f), MuzzlePoint._50yardDrops762rus.Length - 1)];
+        }
+
         distance = Vector3.Distance(currentPosition, lastPosition);
         currentPosition.y -= (distance / 50f) * drop;
-        if (projectileTypes.ToString() == "_40sw")
-        {
-            Debug.DrawRay(lastPosition, currentPosition - lastPosition, Color.blue, 8f);
-        }
-        if (projectileTypes.ToString() == "_9mm")
-        {
-            Debug.DrawRay(lastPosition, currentPosition - lastPosition, Color.red, 8f);
-        }
     }
 }
 
